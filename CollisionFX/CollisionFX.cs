@@ -66,6 +66,9 @@ namespace CollisionFX
         private Color lightColor1 = new Color(254, 226, 160); // Tan / light orange
         private Color lightColor2 = new Color(239, 117, 5); // Red-orange.
 
+		private bool wheelHasWeight;
+		private bool _paused = false;
+
 #if DEBUG
         private GameObject[] spheres = new GameObject[4];
         private bool useSpheres = false;
@@ -99,6 +102,7 @@ namespace CollisionFX
                 moduleWheelDamage = part.FindModuleImplementing<ModuleWheelDamage>();
                 moduleWheelDeployment = part.FindModuleImplementing<ModuleWheelDeployment>();
                 wheelCollider = moduleWheel.wheelColliderHost.GetComponent<WheelCollider>();
+				InvokeRepeating ("checkLanding", 0f, 0.5f);
             }
 
             SetupAudio();
@@ -119,9 +123,10 @@ namespace CollisionFX
                 spheres[3].GetComponent<Renderer>().material.color = Color.yellow;
             }
 #endif
+			_paused = false;
         }
 
-        private bool _paused = false;
+        
         private void OnPause()
         {
             _paused = true;
@@ -145,13 +150,14 @@ namespace CollisionFX
             GameEvents.onGamePause.Remove(OnPause);
             GameEvents.onGameUnpause.Remove(OnUnpause);
             _paused = true;
+			CancelInvoke ();
         }
 
         // Not called on parts where physicalSignificance = false. Check the parent part instead.
         public void OnCollisionEnter(Collision c)
-        {
-            if (_paused) return;
-            if (c.relativeVelocity.magnitude > 3)
+		{
+			if (_paused) return;
+			if (c.relativeVelocity.magnitude > 3)
             {
                 if (c.contacts.Length == 0)
                     return;
@@ -483,7 +489,24 @@ namespace CollisionFX
 
         public void Update()
         {
-            bool x = false;
+            //bool x = false;
+		}
+
+		public void checkLanding() {
+
+			if (!HasUsableWheel())
+				return;
+
+			if (moduleWheel.isGrounded && !wheelHasWeight && part.vessel.srfSpeed > 10) {
+ 
+				ImpactSounds (true);
+				WheelHit hit;
+				if (wheelCollider.GetGroundHit (out hit)) {
+					DustImpact ((float)part.vessel.srfSpeed, hit.point, hit.collider.name);
+				}
+
+			} 
+			wheelHasWeight = moduleWheel.isGrounded;
         }
 
         /// <summary>
