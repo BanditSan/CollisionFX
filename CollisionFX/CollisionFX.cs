@@ -172,7 +172,6 @@ namespace CollisionFX
                         {
                             DustImpact(c.relativeVelocity.magnitude, contactPoint.point, c.collider.name);
 
-							/*
                             bool isUsableWheel = true;
                             if (cfx.moduleWheel != null)
                             {
@@ -189,7 +188,6 @@ namespace CollisionFX
                                 isUsableWheel = false;
 
                             cfx.ImpactSounds(isUsableWheel);
-                            */
                         }
                     }
                 }
@@ -498,6 +496,7 @@ namespace CollisionFX
 
 			if (!HasUsableWheel())
 				return;
+
 			if (moduleWheel.isGrounded && !wheelHasWeight && part.vessel.srfSpeed > 10) {
  
 				ImpactSounds (true);
@@ -618,22 +617,19 @@ namespace CollisionFX
 
         public bool HasUsableWheel()
         {
-			if (moduleWheelDeployment != null && moduleWheelDeployment.Position == 0)
-				return false;
-			// Wheel deployed
+            if (wheelCollider == null)
+                return false;
+            // Has a wheel collider.
+
+            if (moduleWheel == null)
+                return false;
+            // Has a wheel module.
 
             if (moduleWheelDamage != null && moduleWheelDamage.isDamaged)
                 return false;
             // Has an intact wheel.
 
-			if (wheelCollider != null)
-				return true;
-			// Has cached collider
-
-			// However, if we start with retracted gear, it won't have a collider until deployed 
-			// or it gets messed somehow else 
-			wheelCollider = moduleWheel.wheelColliderHost.GetComponent<WheelCollider>();
-			return wheelCollider != null;
+            return (moduleWheelDeployment == null || moduleWheelDeployment.Position > 0);
         }
 
         /// <summary>
